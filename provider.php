@@ -94,12 +94,21 @@ class WPOAuthProvider {
 			$request = OAuthRequest::from_request();
 			$token = self::$server->fetch_request_token($request);
 
-			header('Content-Type: application/x-www-form-urlencoded');
-			printf(
-				'oauth_token=%s&oauth_token_secret=%s',
-				OAuthUtil::urlencode_rfc3986($token->key),
-				OAuthUtil::urlencode_rfc3986($token->secret)
+			$data = array(
+				'oauth_token' => OAuthUtil::urlencode_rfc3986($token->key),
+				'oauth_token_secret' => OAuthUtil::urlencode_rfc3986($token->secret),
+				'oauth_callback_confirmed' => 'true'
 			);
+
+			$callback = $request->get_parameter('oauth_callback');
+			if ($callback === 'oob') {
+				header('Content-Type: application/x-www-form-urlencoded');
+				echo http_build_query($data);
+				die();
+			}
+
+			$callback = add_query_arg($data, $callback);
+			wp_redirect($callback);
 		}
 		catch (OAuthException $e) {
 			header('Content-Type: text/plain');
