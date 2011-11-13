@@ -128,7 +128,7 @@ class WPOAuthProvider {
 		$consumer = self::$data->lookup_consumer($token->consumer);
 
 		if (empty($_POST['wpoauth_nonce']) || empty($_POST['wpoauth_button'])) {
-			return self::authorize_page($consumer);
+			return self::authorize_page($consumer, $_GET['oauth_token']);
 		}
 
 		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
@@ -136,7 +136,7 @@ class WPOAuthProvider {
 		}
 
 		$current_user = wp_get_current_user();
-		switch ($_POST['wpoauth_button']) {
+		switch (strtolower($_POST['wpoauth_button'])) {
 			case 'yes':
 				$token->user = $current_user->ID;
 				$token->authorize();
@@ -150,6 +150,19 @@ class WPOAuthProvider {
 				die();
 				break;
 		}
+	}
+
+	protected static function authorize_page($consumer, $token) {
+?>
+	<form action="" method="POST">
+		<p>Authorize?</p>
+		<?php wp_nonce_field('wpoauth', 'wpoauth_nonce') ?>
+		<input type="hidden" name="oauth_token" value="<?php echo esc_attr($token) ?>" />
+
+		<input type="submit" name="wpoauth_button" value="Yes" />
+		<input type="submit" name="wpoauth_button" value="No" />
+	</form>
+<?php
 	}
 
 	protected static function access_token() {
