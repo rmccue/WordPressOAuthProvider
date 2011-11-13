@@ -1,7 +1,7 @@
 <?php
 /**
- * Name: WP OAuth Provider
- *
+ * Plugin Name: WP OAuth Provider
+ * Description: Enable WordPress to act as an OAuth provider!
  *
  * A massive thanks to Morten Fangel, as without his guide, this would
  * have taken a lot longer to write.
