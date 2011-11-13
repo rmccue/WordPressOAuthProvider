@@ -96,19 +96,18 @@ class WPOAuthProvider {
 
 			$data = array(
 				'oauth_token' => OAuthUtil::urlencode_rfc3986($token->key),
-				'oauth_token_secret' => OAuthUtil::urlencode_rfc3986($token->secret),
-				'oauth_callback_confirmed' => 'true'
+				'oauth_token_secret' => OAuthUtil::urlencode_rfc3986($token->secret)
 			);
 
-			$callback = $request->get_parameter('oauth_callback');
-			if ($callback === 'oob') {
-				header('Content-Type: application/x-www-form-urlencoded');
-				echo http_build_query($data);
-				die();
+			$token->callback = $request->get_parameter('oauth_callback');
+			if (!empty($token->callback)) {
+				$data['oauth_callback_confirmed'] = 'true';
+				$token->save();
 			}
 
-			$callback = add_query_arg($data, $callback);
-			wp_redirect($callback);
+			header('Content-Type: application/x-www-form-urlencoded');
+			echo http_build_query($data);
+			die();
 		}
 		catch (OAuthException $e) {
 			header('Content-Type: text/plain');
@@ -149,9 +148,18 @@ class WPOAuthProvider {
 			case 'yes':
 				$token->user = $current_user->ID;
 				$token->authorize();
+
+				$data = array(
+					'oauth_token' => $request->get_parameter('oauth_token'),
+					'oauth_verifier' => wp_generate_password(8, false)
+				);
 				break;
 			case 'no':
 				$token->delete();
+
+				$data = array(
+					'denied' => true
+				)
 				break;
 			default:
 				// wtf?
@@ -159,6 +167,16 @@ class WPOAuthProvider {
 				die();
 				break;
 		}
+
+		if (!empty($token->callback) && $token->callback !== 'oob') {
+			$callback = add_query_arg($data, $token->callback);
+			wp_redirect($callback);
+			die();
+		}
+
+		header('Content-Type: text/plain');
+		echo http_build_query($data);
+		die();
 	}
 
 	protected static function authorize_page($consumer, $token) {
