@@ -325,13 +325,15 @@ class WPOAuthProvider_DataStore {
 			return true;
 		}
 
-		$existing = get_transient('wpoa_n_' . $nonce);
+		$real = sha1($nonce . $consumer->id . $token->key . $timestamp);
+
+		$existing = get_transient('wpoa_n_' . $real);
 
 		if ($existing !== false) {
 			return true;
 		}
 
-		set_transient('wpoa_n_' . $nonce, true);
+		set_transient('wpoa_n_' . $real, true);
 		return false;
 	}
 
