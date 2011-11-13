@@ -7,6 +7,8 @@
  * have taken a lot longer to write.
  */
 
+require_once(dirname(__FILE__) . '/oauth.php');
+
 class WPOAuthProvider {
 	const PATH_AUTHORIZE = '/oauth/authorize/';
 
