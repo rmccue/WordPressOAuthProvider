@@ -28,10 +28,24 @@ class WPOAuthProvider {
 			self::$oauth->add_signature_method($plaintext);
 		}
 
+		register_activation_hook(__FILE__, array(get_class(), 'activate'));
+		register_deactivation_hook(__FILE__, array(get_class(), 'deactivate'));
+
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
-		add_filter('rewrite_rules_array', array(get_class(), 'my_insert_rewrite_rules'));
+		add_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
 		add_filter('query_vars', array(get_class(), 'query_vars'));
 		add_action('template_redirect', array(get_class(), 'template_redirect'));
+	}
+
+	public static function activate() {
+		global $wp_rewrite;
+		$wp_rewrite->flush_rules();
+	}
+
+	public static function deactivate() {
+		global $wp_rewrite;
+		remove_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
+		$wp_rewrite->flush_rules();
 	}
 
 	public static function rewrite_rules_array($rules) {
