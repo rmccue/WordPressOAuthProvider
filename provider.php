@@ -124,7 +124,7 @@ class WPOAuthProvider {
 
 		$request = OAuthRequest::from_request();
 
-		$token    = get_option($request->get_parameter('oauth_token'));
+		$token    = get_transient('wpoa_' . $request->get_parameter('oauth_token'));
 		$consumer = self::$data->lookup_consumer($token->consumer);
 
 		if (empty($_POST['wpoauth_nonce']) || empty($_POST['wpoauth_button'])) {
