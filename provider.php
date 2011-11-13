@@ -204,7 +204,7 @@ class WPOAuthProvider {
 	protected static function access_token() {
 		try {
 			$request = OAuthRequest::from_request();
-			$token = $oauth_server->fetch_access_token($request);
+			$token = self::$server->fetch_access_token($request);
 
 			header('Content-Type: application/x-www-form-urlencoded');
 			printf(
