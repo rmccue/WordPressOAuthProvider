@@ -106,7 +106,7 @@ class WPOAuthProvider {
 			}
 
 			header('Content-Type: application/x-www-form-urlencoded');
-			echo http_build_query($data);
+			echo http_build_query($data, null, '&');
 			die();
 		}
 		catch (OAuthException $e) {
@@ -175,7 +175,7 @@ class WPOAuthProvider {
 		}
 
 		header('Content-Type: text/plain');
-		echo http_build_query($data);
+		echo http_build_query($data, null, '&');
 		die();
 	}
 
