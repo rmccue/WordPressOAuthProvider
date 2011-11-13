@@ -315,7 +315,7 @@ class WPOAuthProvider_DataStore {
 				break;
 		}
 
-		if ($token->consumer !== $consumer->id) {
+		if ($token->consumer !== $consumer->key) {
 			return null;
 		}
 
