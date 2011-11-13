@@ -97,8 +97,8 @@ class WPOAuthProvider {
 			header('Content-Type: application/x-www-form-urlencoded');
 			printf(
 				'oauth_token=%s&oauth_token_secret=%s',
-				OAuthUtil::urlencodeRFC3986($token->key),
-				OAuthUtil::urlencodeRFC3986($token->secret)
+				OAuthUtil::urlencode_rfc3986($token->key),
+				OAuthUtil::urlencode_rfc3986($token->secret)
 			);
 		}
 		catch (OAuthException $e) {
@@ -160,8 +160,8 @@ class WPOAuthProvider {
 			header('Content-Type: application/x-www-form-urlencoded');
 			printf(
 				'oauth_token=%s&oauth_token_secret=%s',
-				OAuthUtil::urlencodeRFC3986($this->key),
-				OAuthUtil::urlencodeRFC3986($this->secret)
+				OAuthUtil::urlencode_rfc3986($this->key),
+				OAuthUtil::urlencode_rfc3986($this->secret)
 			);
 		} catch( OAuthException $e ) {
 			status_header(401);
