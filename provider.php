@@ -282,17 +282,17 @@ class WPOAuthProvider_DataStore {
 	 */
 	public function lookup_nonce($consumer, $token, $nonce, $timestamp) {
 		if ($timestamp < (time() - self::RETAIN_TIME)) {
-			return false;
+			return true;
 		}
 
 		$existing = get_transient('wpoa_n_' . $nonce);
 
 		if ($existing !== false) {
-			return false;
+			return true;
 		}
 
 		set_transient('wpoa_n_' . $nonce, true);
-		return true;
+		return false;
 	}
 
 	/**
