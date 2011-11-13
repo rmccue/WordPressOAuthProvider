@@ -305,10 +305,10 @@ class WPOAuthProvider_DataStore {
 	public function lookup_token($consumer, $token_type, $token) {
 		switch ($token_type) {
 			case 'access':
-				$token = get_option($token);
+				$token = get_option('wpoa_' . $token);
 				break;
 			case 'request':
-				$token = get_transient($token);
+				$token = get_transient('wpoa_' . $token);
 				break;
 			default:
 				throw new OAuthException('Invalid token type');
