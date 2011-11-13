@@ -172,6 +172,11 @@ class WPOAuthProvider {
 				break;
 		}
 
+		if (empty($token->callback) && $request->get_parameter('oauth_callback')) {
+			$token->callback = $request->get_parameter('oauth_callback');
+			$token->save();
+		}
+
 		if (!empty($token->callback) && $token->callback !== 'oob') {
 			$callback = add_query_arg($data, $token->callback);
 			wp_redirect($callback);
