@@ -159,7 +159,7 @@ class WPOAuthProvider {
 
 				$data = array(
 					'denied' => true
-				)
+				);
 				break;
 			default:
 				// wtf?
