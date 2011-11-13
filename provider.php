@@ -17,7 +17,7 @@ class WPOAuthProvider {
 
 	public static function bootstrap() {
 		self::$data = new WPOAuthProvider_DataStore();
-		self::$server = new OAuthServer($data);
+		self::$server = new OAuthServer(self::$data);
 
 		$hmac = new OAuthSignatureMethod_HMAC_SHA1();
 		self::$server->add_signature_method($hmac);
