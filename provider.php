@@ -10,6 +10,9 @@
 require_once(dirname(__FILE__) . '/oauth.php');
 
 class WPOAuthProvider {
+	protected static $data;
+	protected static $server;
+
 	const PATH_AUTHORIZE = '/oauth/authorize/';
 
 	public static function bootstrap() {
