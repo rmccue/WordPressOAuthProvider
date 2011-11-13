@@ -102,6 +102,7 @@ class WPOAuthProvider {
 			);
 		}
 		catch (OAuthException $e) {
+			header('Content-Type: text/plain');
 			status_header(401);
 			echo $e->getMessage();
 			die();
@@ -164,6 +165,7 @@ class WPOAuthProvider {
 			);
 		} catch( OAuthException $e ) {
 			status_header(401);
+			header('Content-Type: text/plain');
 			echo $e->getMessage();
 			die();
 		}
