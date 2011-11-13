@@ -89,7 +89,7 @@ class WPOAuthProvider {
 		$url = add_query_arg('oauth_token', $_GET['oauth_token'], $url);
 
 		if (!is_user_logged_in()) {
-			wp_redirect(wp_login_url($url))
+			wp_redirect(wp_login_url($url));
 			die();
 		}
 
