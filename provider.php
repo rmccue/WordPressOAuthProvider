@@ -289,7 +289,7 @@ class WPOAuthProvider_DataStore {
 			return false;
 		}
 
-		save_transient('wpoa_n_' . $nonce, true);
+		set_transient('wpoa_n_' . $nonce, true);
 		return true;
 	}
 
