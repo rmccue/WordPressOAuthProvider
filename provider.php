@@ -84,6 +84,10 @@ class WPOAuthProvider {
 			case 'access_token':
 				self::access_token();
 				break;
+			default:
+				global $wp_query;
+				$wp_query->set_404();
+				return;
 		}
 
 		die();
