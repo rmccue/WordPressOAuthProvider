@@ -392,6 +392,7 @@ class WPOAuthProvider_Token_Request extends WPOAuthProvider_Token {
 	public $consumer;
 	*/
 	public $authorized = false;
+	public $callback = 'oob';
 
 	/**
 	 * How long should we keep request tokens?
