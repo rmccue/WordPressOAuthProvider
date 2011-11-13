@@ -151,11 +151,12 @@ class WPOAuthProvider {
 		switch (strtolower($_POST['wpoauth_button'])) {
 			case 'yes':
 				$token->user = $current_user->ID;
+				$token->verifier = wp_generate_password(8, false);
 				$token->authorize();
 
 				$data = array(
 					'oauth_token' => $request->get_parameter('oauth_token'),
-					'oauth_verifier' => wp_generate_password(8, false)
+					'oauth_verifier' => $token->verifier
 				);
 				break;
 			case 'no':
@@ -276,12 +277,17 @@ class WPOAuthProvider_DataStore {
 	}
 
 	/**
+	 * @param WPOAuth_Provider_Token_Request
 	 * @param OAuthConsumer $consumer
+	 * @param string $verifier
 	 * @return WPOAuthProvider_Token_Access|null
 	 */
-	public function new_access_token($token, $consumer) {
+	public function new_access_token($token, $consumer, $verifier) {
 		if (!$token->authorized) {
 			throw new OAuthException('Unauthorized access token');
+		}
+		if ($token->verifier !== $verifier) {
+			throw new OAuthException('Verifier does not match');
 		}
 
 		$key    = self::generate_key('at');
@@ -404,6 +410,7 @@ class WPOAuthProvider_Token_Request extends WPOAuthProvider_Token {
 	*/
 	public $authorized = false;
 	public $callback;
+	public $verifier;
 
 	/**
 	 * How long should we keep request tokens?
