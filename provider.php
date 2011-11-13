@@ -34,6 +34,7 @@ class WPOAuthProvider {
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
 		add_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
 		add_filter('query_vars', array(get_class(), 'query_vars'));
+		add_filter('redirect_canonical', array(get_class(), 'redirect_canonical'), 10, 2);
 		add_action('template_redirect', array(get_class(), 'template_redirect'));
 	}
 
@@ -57,6 +58,14 @@ class WPOAuthProvider {
 	public static function query_vars($vars) {
 		$vars[] = 'oauth';
 		return $vars;
+	}
+
+	public static function redirect_canonical($new, $old) {
+		if (strlen(get_query_var('oauth')) > 0) {
+			return false;
+		}
+
+		return $new;
 	}
 
 	public static function template_redirect() {
