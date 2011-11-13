@@ -196,7 +196,7 @@ class WPOAuthProvider_DataStore {
 	 * @return object Has properties "key" and "secret"
 	 */
 	public function lookup_consumer($consumer_key) {
-		$secret = get_option('wpoauth_' . $consumer_key, false);
+		$secret = get_option('wpoa_c_' . $consumer_key, false);
 		if (!$secret) {
 			return null;
 		}
