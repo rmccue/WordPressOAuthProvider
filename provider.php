@@ -34,7 +34,6 @@ class WPOAuthProvider {
 	}
 
 	public static function request_token($request) {
-		$request = OAuthRequest::from_request();
 		$token = self::$server->fetch_request_token($request);
 
 		$data = array(
@@ -58,8 +57,6 @@ class WPOAuthProvider {
 			wp_redirect(wp_login_url($url));
 			die();
 		}
-
-		$request = OAuthRequest::from_request();
 
 		$token    = get_transient('wpoa_' . $request->get_parameter('oauth_token'));
 		$consumer = self::$data->lookup_consumer($token->consumer);
@@ -130,7 +127,6 @@ class WPOAuthProvider {
 	}
 
 	protected static function access_token($request) {
-		$request = OAuthRequest::from_request();
 		$token = self::$server->fetch_access_token($request);
 
 		header('Content-Type: application/x-www-form-urlencoded');
