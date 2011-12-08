@@ -50,7 +50,7 @@ class WPOAuthProvider {
 		return $data;
 	}
 
-	protected static function authorize($request, $url) {
+	public static function authorize($request, $url) {
 		$url = add_query_arg('oauth_token', $request->get_parameter('oauth_token'), $url);
 
 		if (!is_user_logged_in()) {
@@ -121,7 +121,7 @@ class WPOAuthProvider {
 <?php
 	}
 
-	protected static function access_token($request) {
+	public static function access_token($request) {
 		$token = self::$server->fetch_access_token($request);
 
 		header('Content-Type: application/x-www-form-urlencoded');
