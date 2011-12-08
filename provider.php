@@ -66,7 +66,7 @@ class WPOAuthProvider {
 		}
 
 		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
-			wp_die('Invalid request.');
+			throw new Exception('Invalid request.', 400);
 		}
 
 		$current_user = wp_get_current_user();
@@ -90,8 +90,7 @@ class WPOAuthProvider {
 				break;
 			default:
 				// wtf?
-				status_header(500);
-				die();
+				throw new Exception('Weird', 500);
 				break;
 		}
 
