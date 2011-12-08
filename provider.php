@@ -7,7 +7,9 @@
  * have taken a lot longer to write.
  */
 
-require_once(dirname(__FILE__) . '/oauth.php');
+if (!class_exists('OAuthServer')) {
+	require_once(dirname(__FILE__) . '/oauth.php');
+}
 
 class WPOAuthProvider {
 	protected static $data;
