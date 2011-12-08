@@ -106,10 +106,6 @@ class WPOAuthProvider {
 		}
 
 		return $data;
-
-		header('Content-Type: text/plain');
-		echo http_build_query($data, null, '&');
-		die();
 	}
 
 	protected static function authorize_page($consumer, $token) {
