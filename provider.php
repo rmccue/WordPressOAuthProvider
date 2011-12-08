@@ -30,106 +30,29 @@ class WPOAuthProvider {
 			self::$oauth->add_signature_method($plaintext);
 		}
 
-		register_activation_hook(__FILE__, array(get_class(), 'activate'));
-		register_deactivation_hook(__FILE__, array(get_class(), 'deactivate'));
-
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
-		add_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
-		add_filter('query_vars', array(get_class(), 'query_vars'));
-		add_filter('redirect_canonical', array(get_class(), 'redirect_canonical'), 10, 2);
-		add_action('template_redirect', array(get_class(), 'template_redirect'));
 	}
 
-	public static function activate() {
-		global $wp_rewrite;
-		$wp_rewrite->flush_rules();
-	}
+	public static function request_token($request) {
+		$request = OAuthRequest::from_request();
+		$token = self::$server->fetch_request_token($request);
 
-	public static function deactivate() {
-		global $wp_rewrite;
-		remove_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
-		$wp_rewrite->flush_rules();
-	}
+		$data = array(
+			'oauth_token' => OAuthUtil::urlencode_rfc3986($token->key),
+			'oauth_token_secret' => OAuthUtil::urlencode_rfc3986($token->secret)
+		);
 
-	public static function rewrite_rules_array($rules) {
-		$newrules = array();
-		$newrules['oauth/(\w+)$'] = 'index.php?oauth=$matches[1]';
-		return array_merge($newrules, $rules);
-	}
-
-	public static function query_vars($vars) {
-		$vars[] = 'oauth';
-		return $vars;
-	}
-
-	public static function redirect_canonical($new, $old) {
-		if (strlen(get_query_var('oauth')) > 0) {
-			return false;
+		$token->callback = $request->get_parameter('oauth_callback');
+		if (!empty($token->callback)) {
+			$data['oauth_callback_confirmed'] = 'true';
+			$token->save();
 		}
 
-		return $new;
+		return $data;
 	}
 
-	public static function template_redirect() {
-		$page = get_query_var('oauth');
-		if (!$page) {
-			return;
-		}
-
-		switch ($page) {
-			case 'request_token':
-				self::request_token();
-				break;
-			case 'authorize':
-				self::authorize();
-				break;
-			case 'access_token':
-				self::access_token();
-				break;
-			default:
-				global $wp_query;
-				$wp_query->set_404();
-				return;
-		}
-
-		die();
-	}
-
-	protected static function request_token() {
-		try {
-			$request = OAuthRequest::from_request();
-			$token = self::$server->fetch_request_token($request);
-
-			$data = array(
-				'oauth_token' => OAuthUtil::urlencode_rfc3986($token->key),
-				'oauth_token_secret' => OAuthUtil::urlencode_rfc3986($token->secret)
-			);
-
-			$token->callback = $request->get_parameter('oauth_callback');
-			if (!empty($token->callback)) {
-				$data['oauth_callback_confirmed'] = 'true';
-				$token->save();
-			}
-
-			header('Content-Type: application/x-www-form-urlencoded');
-			echo http_build_query($data, null, '&');
-			die();
-		}
-		catch (OAuthException $e) {
-			header('Content-Type: text/plain');
-			status_header(401);
-			echo $e->getMessage();
-			die();
-		}
-	}
-
-	protected static function authorize() {
-		if (empty($_GET['oauth_token'])) {
-			wp_die('No OAuth token found in request. Please ensure your client is configured correctly.', 'OAuth Error', array('response' => 400));
-		}
-
-		$url = site_url(self::PATH_AUTHORIZE);
-		$url = add_query_arg('oauth_token', $_GET['oauth_token'], $url);
+	protected static function authorize($request, $url) {
+		$url = add_query_arg('oauth_token', $request->get_parameter('oauth_token'), $url);
 
 		if (!is_user_logged_in()) {
 			wp_redirect(wp_login_url($url));
@@ -142,7 +65,7 @@ class WPOAuthProvider {
 		$consumer = self::$data->lookup_consumer($token->consumer);
 
 		if (empty($_POST['wpoauth_nonce']) || empty($_POST['wpoauth_button'])) {
-			return self::authorize_page($consumer, $_GET['oauth_token']);
+			return self::authorize_page($consumer, $token);
 		}
 
 		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
@@ -186,6 +109,8 @@ class WPOAuthProvider {
 			die();
 		}
 
+		return $data;
+
 		header('Content-Type: text/plain');
 		echo http_build_query($data, null, '&');
 		die();
@@ -204,23 +129,16 @@ class WPOAuthProvider {
 <?php
 	}
 
-	protected static function access_token() {
-		try {
-			$request = OAuthRequest::from_request();
-			$token = self::$server->fetch_access_token($request);
+	protected static function access_token($request) {
+		$request = OAuthRequest::from_request();
+		$token = self::$server->fetch_access_token($request);
 
-			header('Content-Type: application/x-www-form-urlencoded');
-			printf(
-				'oauth_token=%s&oauth_token_secret=%s',
-				OAuthUtil::urlencode_rfc3986($token->key),
-				OAuthUtil::urlencode_rfc3986($token->secret)
-			);
-		} catch( OAuthException $e ) {
-			status_header(401);
-			header('Content-Type: text/plain');
-			echo $e->getMessage();
-			die();
-		}
+		header('Content-Type: application/x-www-form-urlencoded');
+		return sprintf(
+			'oauth_token=%s&oauth_token_secret=%s',
+			OAuthUtil::urlencode_rfc3986($token->key),
+			OAuthUtil::urlencode_rfc3986($token->secret)
+		);
 	}
 
 	public static function authenticate($user, $username, $password) {
