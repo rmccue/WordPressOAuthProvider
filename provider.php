@@ -33,6 +33,14 @@ class WPOAuthProvider {
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
 	}
 
+	public static function get_consumer($key) {
+		return self::$data->lookup_consumer($key);
+	}
+
+	public static function create_consumer() {
+		return self::$data->new_consumer();
+	}
+
 	public static function request_token($request) {
 		$token = self::$server->fetch_request_token($request);
 
@@ -166,6 +174,21 @@ class WPOAuthProvider_DataStore {
 
 		$consumer = new OAuthConsumer($consumer_key, $secret);
 		return $consumer;
+	}
+
+	/**
+	 * @return string Consumer key
+	 */
+	public function new_consumer() {
+		$key    = wp_generate_password(12, false);
+		$secret = self::generate_secret();
+
+		$result = update_option('wpoa_c_' . $key, $secret);
+		if (!$result) {
+			return false;
+		}
+
+		return $key;
 	}
 
 	/**
