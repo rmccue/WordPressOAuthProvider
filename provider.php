@@ -309,7 +309,7 @@ class WPOAuthProvider_DataStore {
 		$secret = self::generate_secret();
 
 		$access = new WPOAuthProvider_Token_Access($key, $secret);
-		$access->consumer = $consumer->id;
+		$access->consumer = $consumer->key;
 		$access->user = $token->user;
 
 		$access->save();
