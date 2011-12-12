@@ -88,7 +88,6 @@ class WPOAuthProvider {
 
 		die();
 	}
-	}
 
 	public static function get_consumer($key) {
 		return self::$data->lookup_consumer($key);
