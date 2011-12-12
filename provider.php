@@ -30,7 +30,64 @@ class WPOAuthProvider {
 			self::$oauth->add_signature_method($plaintext);
 		}
 
+		register_activation_hook(__FILE__, array(get_class(), 'activate'));
+		register_deactivation_hook(__FILE__, array(get_class(), 'deactivate'));
+
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
+		add_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
+		add_filter('query_vars', array(get_class(), 'query_vars'));
+		add_filter('redirect_canonical', array(get_class(), 'redirect_canonical'), 10, 2);
+		add_action('template_redirect', array(get_class(), 'template_redirect'));
+	}
+
+	public static function activate() {
+		global $wp_rewrite;
+		$wp_rewrite->flush_rules();
+	}
+
+	public static function deactivate() {
+		global $wp_rewrite;
+		remove_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
+		$wp_rewrite->flush_rules();
+	}
+
+	public static function rewrite_rules_array($rules) {
+		$newrules = array();
+		$newrules['oauth/authorize$'] = 'index.php?oauth=authorize';
+		return array_merge($newrules, $rules);
+	}
+
+	public static function query_vars($vars) {
+		$vars[] = 'oauth';
+		return $vars;
+	}
+
+	public static function redirect_canonical($new, $old) {
+		if (strlen(get_query_var('oauth')) > 0) {
+			return false;
+		}
+
+		return $new;
+	}
+
+	public static function template_redirect() {
+		$page = get_query_var('oauth');
+		if (!$page) {
+			return;
+		}
+
+		switch ($page) {
+			case 'authorize':
+				self::authorize();
+				break;
+			default:
+				global $wp_query;
+				$wp_query->set_404();
+				return;
+		}
+
+		die();
+	}
 	}
 
 	public static function get_consumer($key) {
@@ -59,6 +116,8 @@ class WPOAuthProvider {
 	}
 
 	public static function authorize($request, $url) {
+		$request = OAuthRequest::from_request();
+		$url = site_url('/oauth/authorize');
 		$url = add_query_arg('oauth_token', $request->get_parameter('oauth_token'), $url);
 
 		if (!is_user_logged_in()) {
@@ -74,7 +133,8 @@ class WPOAuthProvider {
 		}
 
 		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
-			throw new Exception('Invalid request.', 400);
+			status_header(400);
+			wp_die('Invalid request.');
 		}
 
 		$current_user = wp_get_current_user();
@@ -98,7 +158,8 @@ class WPOAuthProvider {
 				break;
 			default:
 				// wtf?
-				throw new Exception('Weird', 500);
+				status_header(500);
+				wp_die('Weird');
 				break;
 		}
 
@@ -113,7 +174,10 @@ class WPOAuthProvider {
 			die();
 		}
 
-		return $data;
+
+		header('Content-Type: text/plain');
+		echo http_build_query($data, null, '&');
+		die();
 	}
 
 	protected static function authorize_page($consumer, $token) {
