@@ -34,6 +34,7 @@ class WPOAuthProvider {
 		register_deactivation_hook(__FILE__, array(get_class(), 'deactivate'));
 
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
+		add_filter('plugins_loaded', array(get_class(), 'plugins_loaded'));
 		add_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
 		add_filter('query_vars', array(get_class(), 'query_vars'));
 		add_filter('redirect_canonical', array(get_class(), 'redirect_canonical'), 10, 2);
@@ -223,6 +224,19 @@ class WPOAuthProvider {
 		}
 
 		return $user;
+	}
+
+	public static function plugins_loaded() {
+		try {
+			$request = OAuthRequest::from_request();
+			list($consumer, $token) = self::$server->verify_request($request);
+
+			global $current_user;
+			$current_user = new WP_User($token->user);
+		}
+		catch (OAuthException $e) {
+			// header('WWW-Authenticate: OAuth realm="' . site_url() . '"');
+		}
 	}
 }
 
