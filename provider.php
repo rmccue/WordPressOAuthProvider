@@ -115,7 +115,7 @@ class WPOAuthProvider {
 	}
 
 	public static function authorize() {
-		if (empty($_GET['oauth_token'])) {
+		if (empty($_REQUEST['oauth_token'])) {
 			wp_die('No OAuth token found in request. Please ensure your client is configured correctly.', 'OAuth Error', array('response' => 400));
 		}
 
