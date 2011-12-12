@@ -114,7 +114,7 @@ class WPOAuthProvider {
 		return $data;
 	}
 
-	public static function authorize($request, $url) {
+	public static function authorize() {
 		$request = OAuthRequest::from_request();
 		$url = site_url('/oauth/authorize');
 		$url = add_query_arg('oauth_token', $request->get_parameter('oauth_token'), $url);
