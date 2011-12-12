@@ -115,6 +115,10 @@ class WPOAuthProvider {
 	}
 
 	public static function authorize() {
+		if (empty($_GET['oauth_token'])) {
+			wp_die('No OAuth token found in request. Please ensure your client is configured correctly.', 'OAuth Error', array('response' => 400));
+		}
+
 		$request = OAuthRequest::from_request();
 		$url = site_url('/oauth/authorize');
 		$url = add_query_arg('oauth_token', $request->get_parameter('oauth_token'), $url);
@@ -128,7 +132,7 @@ class WPOAuthProvider {
 		$consumer = self::$data->lookup_consumer($token->consumer);
 
 		if (empty($_POST['wpoauth_nonce']) || empty($_POST['wpoauth_button'])) {
-			return self::authorize_page($consumer, $token);
+			return self::authorize_page($consumer, $request->get_parameter('oauth_token'));
 		}
 
 		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
@@ -181,7 +185,7 @@ class WPOAuthProvider {
 
 	protected static function authorize_page($consumer, $token) {
 ?>
-	<form action="" method="POST">
+	<form action="<?php echo site_url('/oauth/authorize') ?>" method="POST">
 		<p>Authorize?</p>
 		<?php wp_nonce_field('wpoauth', 'wpoauth_nonce') ?>
 		<input type="hidden" name="oauth_token" value="<?php echo esc_attr($token) ?>" />
