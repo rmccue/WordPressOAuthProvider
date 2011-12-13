@@ -98,6 +98,10 @@ class WPOAuthProvider {
 		return self::$data->new_consumer();
 	}
 
+	public static function delete_consumer($key) {
+		return self::$data->delete_consumer($key);
+	}
+
 	public static function request_token($request) {
 		$token = self::$server->fetch_request_token($request);
 
@@ -270,6 +274,14 @@ class WPOAuthProvider_DataStore {
 		}
 
 		return $key;
+	}
+
+	/**
+	 * @param string $consumer_key
+	 * @return boolean
+	 */
+	public function delete_consumer($consumer_key) {
+		return delete_option('wpoa_c_' . $consumer_key, false);
 	}
 
 	/**
