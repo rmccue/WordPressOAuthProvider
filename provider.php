@@ -137,7 +137,7 @@ class WPOAuthProvider {
 		$consumer = self::$data->lookup_consumer($token->consumer);
 
 		if (empty($_POST['wpoauth_nonce']) || empty($_POST['wpoauth_button'])) {
-			return self::authorize_page($consumer, $request->get_parameter('oauth_token'));
+			return self::authorize_page($consumer, $request->get_parameter('oauth_token'), $token);
 		}
 
 		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
@@ -188,16 +188,39 @@ class WPOAuthProvider {
 		die();
 	}
 
-	protected static function authorize_page($consumer, $token) {
+	protected static function authorize_page($consumer, $token, $request) {
+		$domain = parse_url($request->callback, PHP_URL_HOST);
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Authorize Renku</title>
+	<style>
+		body {
+			padding: 20px;
+			font: 14px/1.4 Helvetica, Arial, sans-serif;
+			background: #f0f0f0;
+		}
+		code {
+			font: 13px Consolas, monospace;
+			background: #f0f0f0;
+			padding: 6px 5px;
+			margin: 0 4px;
+		}
+	</style>
+</head>
+<body>
 	<form action="<?php echo site_url('/oauth/authorize') ?>" method="POST">
-		<p>Authorize?</p>
+		<h1>Link Account</h1>
+		<p>Link <code><?php echo esc_html($domain) ?></code> to your <?php bloginfo('name') ?> account?</p>
 		<?php wp_nonce_field('wpoauth', 'wpoauth_nonce') ?>
 		<input type="hidden" name="oauth_token" value="<?php echo esc_attr($token) ?>" />
 
 		<input type="submit" name="wpoauth_button" value="Yes" />
 		<input type="submit" name="wpoauth_button" value="No" />
 	</form>
+</body>
+</html>
 <?php
 	}
 
