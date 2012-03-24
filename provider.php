@@ -204,7 +204,7 @@ class WPOAuthProvider {
 		}
 		code {
 			font: 13px Consolas, monospace;
-			background: #f0f0f0;
+			background: #fff;
 			padding: 6px 5px;
 			margin: 0 4px;
 		}
