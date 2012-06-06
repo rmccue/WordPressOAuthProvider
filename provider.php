@@ -184,7 +184,7 @@ class WPOAuthProvider {
 
 		$current_user = wp_get_current_user();
 		switch (strtolower($_POST['wpoauth_button'])) {
-			case 'yes':
+			case 'authorize':
 				$token->user = $current_user->ID;
 				$token->verifier = wp_generate_password(8, false);
 				$token->authorize();
@@ -194,7 +194,7 @@ class WPOAuthProvider {
 					'oauth_verifier' => $token->verifier
 				);
 				break;
-			case 'no':
+			case 'cancel':
 				$token->delete();
 
 				$data = array(
@@ -245,17 +245,135 @@ class WPOAuthProvider {
 			padding: 6px 5px;
 			margin: 0 4px;
 		}
+		.success {
+			background: #DFF0D8;
+			color: #468847;
+			border: 1px solid #D6E9C6;
+			-webkit-border-radius: 4px;
+			-moz-border-radius: 4px;
+			border-radius: 4px;
+			margin-top: -10px;
+			margin-bottom: 0;
+			padding: 8px 35px 8px 14px;
+			text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+		}
+
+		.btn {
+			display: inline-block;
+			*display: inline;
+			padding: 4px 10px 4px;
+			margin-bottom: 0;
+			*margin-left: .3em;
+			font-size: 13px;
+			line-height: 18px;
+			*line-height: 20px;
+			color: #333;
+			text-align: center;
+			text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+			vertical-align: middle;
+			cursor: pointer;
+			background-color: #f5f5f5;
+			*background-color: #e6e6e6;
+			background-image: -ms-linear-gradient(top, #ffffff, #e6e6e6);
+			background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
+			background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
+			background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);
+			background-image: linear-gradient(top, #ffffff, #e6e6e6);
+			background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
+			background-repeat: repeat-x;
+			border: 1px solid #cccccc;
+			*border: 0;
+			border-color: #ccc;
+			border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+			border-bottom-color: #b3b3b3;
+			-webkit-border-radius: 4px;
+				 -moz-border-radius: 4px;
+							border-radius: 4px;
+			filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ffffff', endColorstr='#e6e6e6', GradientType=0);
+			filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+			*zoom: 1;
+			-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+				 -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+							box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+		}
+
+		.btn:active {
+			background-color: #e6e6e6;
+			*background-color: #d9d9d9;
+			background-color: #d9d9d9 \9;
+			background-image: none;
+			outline: 0;
+			-webkit-box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
+				 -moz-box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
+							box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
+			color: rgba(255, 255, 255, 0.75);
+		}
+
+		.btn:hover {
+			text-decoration: none;
+			background-color: #e6e6e6;
+			*background-color: #d9d9d9;
+			/* Buttons in IE7 don't get borders, so darken on hover */
+
+			background-position: 0 -15px;
+			-webkit-transition: background-position 0.1s linear;
+				 -moz-transition: background-position 0.1s linear;
+					-ms-transition: background-position 0.1s linear;
+					 -o-transition: background-position 0.1s linear;
+							transition: background-position 0.1s linear;
+		}
+
+		.btn:focus {
+			outline: thin dotted #333;
+			outline: 5px auto -webkit-focus-ring-color;
+			outline-offset: -2px;
+		}
+
+		.btn-success {
+			color: #fff;
+			background-color: #5bb75b;
+			*background-color: #51a351;
+			background-image: -ms-linear-gradient(top, #62c462, #51a351);
+			background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#62c462), to(#51a351));
+			background-image: -webkit-linear-gradient(top, #62c462, #51a351);
+			background-image: -o-linear-gradient(top, #62c462, #51a351);
+			background-image: -moz-linear-gradient(top, #62c462, #51a351);
+			background-image: linear-gradient(top, #62c462, #51a351);
+			background-repeat: repeat-x;
+			border-color: #51a351 #51a351 #387038;
+			border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+			filter: progid:dximagetransform.microsoft.gradient(startColorstr='#62c462', endColorstr='#51a351', GradientType=0);
+			filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+		}
+
+		.btn-success:hover,
+		.btn-success:active {
+			background-color: #51a351;
+			*background-color: #499249;
+			color: #fff;
+		}
+
+		.btn-success:active {
+			background-color: #408140 \9;
+		}
 	</style>
 </head>
 <body>
-	<form action="<?php echo site_url('/oauth/authorize') ?>" method="POST">
+<?php
+if (isset($_GET['checkemail'])):
+?>
+	<p class="success">Registration complete. Please check your e-mail for your password.</p>
+<?php
+endif;
+?>
+	<form action="<?php echo home_url('/oauth/authorize') ?>" method="POST">
 		<h1>Link Account</h1>
 		<p>Link <code><?php echo esc_html($domain) ?></code> to your <?php bloginfo('name') ?> account?</p>
 		<?php wp_nonce_field('wpoauth', 'wpoauth_nonce') ?>
 		<input type="hidden" name="oauth_token" value="<?php echo esc_attr($token) ?>" />
 
-		<input type="submit" name="wpoauth_button" value="Yes" />
-		<input type="submit" name="wpoauth_button" value="No" />
+		<input type="submit" name="wpoauth_button" class="btn btn-success" value="Authorize" />
+		<input type="submit" name="wpoauth_button" class="btn btn-danger" value="Cancel" />
 	</form>
 </body>
 </html>
