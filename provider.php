@@ -527,7 +527,7 @@ class WPOAuthProvider_DataStore {
 				break;
 		}
 
-		if ($token->consumer !== $consumer->key) {
+		if ($token === false || $token->consumer !== $consumer->key) {
 			return null;
 		}
 
@@ -546,7 +546,12 @@ class WPOAuthProvider_DataStore {
 			return true;
 		}
 
-		$real = sha1($nonce . $consumer->id . $token->key . $timestamp);
+		if ($token !== null) {
+			$real = sha1($nonce . $consumer->key . $token->key . $timestamp);
+		}
+		else {
+			$real = sha1($nonce . $consumer->key . 'notoken' . $timestamp);
+		}
 
 		$existing = get_transient('wpoa_n_' . $real);
 
