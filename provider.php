@@ -162,7 +162,7 @@ class WPOAuthProvider {
 		}
 
 		$request = OAuthRequest::from_request();
-		$url = site_url('/oauth/authorize');
+		$url = home_url('/oauth/authorize');
 		$url = add_query_arg('oauth_token', $request->get_parameter('oauth_token'), $url);
 
 		if (!is_user_logged_in()) {
