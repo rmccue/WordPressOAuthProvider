@@ -33,6 +33,8 @@ class WPOAuthProvider {
 		register_activation_hook(__FILE__, array(get_class(), 'activate'));
 		register_deactivation_hook(__FILE__, array(get_class(), 'deactivate'));
 
+		add_action('admin_menu', array(__CLASS__, 'menu'), -100);
+
 		add_filter('authenticate', array(get_class(), 'authenticate'), 15, 3);
 		add_filter('plugins_loaded', array(get_class(), 'plugins_loaded'));
 		add_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
@@ -52,6 +54,68 @@ class WPOAuthProvider {
 		global $wp_rewrite;
 		remove_filter('rewrite_rules_array', array(get_class(), 'rewrite_rules_array'));
 		$wp_rewrite->flush_rules();
+	}
+
+	/**
+	 * Add our menu page
+	 *
+	 * @wp-action admin_menu
+	 */
+	public static function menu() {
+		add_dashboard_page('OAuth Keys', 'OAuth Keys', 'manage_options', 'wpoaprovider', array(__CLASS__, 'oauth_config'));
+	}
+
+	/**
+	 * OAuth configuration page
+	 *
+	 * Hooked via `add_dashboard_page()`
+	 * @see menu()
+	 * @param WP_User $user Current user
+	 */
+	public static function oauth_config($user) {
+		$consumers = get_option('wpoaprovider_consumers', array());
+		if (!empty($_GET['action'])) {
+			if ($_GET['action'] === 'create') {
+				$key = WPOAuthProvider::create_consumer();
+				$consumers[$key] = $key;
+				update_option('wpoaprovider_consumers', $consumers);
+			}
+			elseif ($_GET['action'] === 'delete' && !empty($_GET['key'])) {
+				WPOAuthProvider::delete_consumer($_GET['key']);
+				unset($consumers[$_GET['key']]);
+				update_option('wpoaprovider_consumers', $consumers);
+			}
+		}
+?>
+	<h2><?php _e('OAuth Details' , 'wpoaprovider'); ?></h2>
+	<p><a href="index.php?page=wpoaprovider&amp;action=create">New Pair</a></p>
+<?php
+
+?>
+	<table>
+		<thead>
+			<tr>
+				<th>Key</th>
+				<th>Secret</th>
+				<th>Action</th>
+			</tr>
+		</head>
+		<tbody>
+<?php
+		foreach ($consumers as $key) {
+			$consumer = WPOAuthProvider::get_consumer($key);
+?>
+			<tr>
+				<td><code><?php echo $consumer->key ?></code></td>
+				<td><code><?php echo $consumer->secret ?></code></td>
+				<td><a href="index.php?page=wpoaprovider&amp;action=delete&amp;key=<?php echo esc_attr($consumer->key) ?>">Delete</a></td>
+			</tr>
+<?php
+		}
+?>
+		</tbody>
+	</table>
+<?php
 	}
 
 	public static function rewrite_rules_array($rules) {
