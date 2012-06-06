@@ -39,6 +39,8 @@ class WPOAuthProvider {
 		add_filter('query_vars', array(get_class(), 'query_vars'));
 		add_filter('redirect_canonical', array(get_class(), 'redirect_canonical'), 10, 2);
 		add_action('template_redirect', array(get_class(), 'template_redirect'));
+		add_action('login_form', array(get_class(), 'setup_register_mangle'));
+		add_action('update_user_metadata', array(get_class(), 'after_register_autologin'), 10, 4);
 	}
 
 	public static function activate() {
@@ -88,6 +90,41 @@ class WPOAuthProvider {
 		}
 
 		die();
+	}
+
+	public static function setup_register_mangle() {
+		add_filter('site_url', array(get_class(), 'register_mangle'), 10, 3);
+	}
+
+	public static function after_register_autologin($metaid, $userid, $key, $value) {
+		// We only care about the password nag event. Ignore anything else.
+		if ( 'default_password_nag' !== $key || true != $value) {
+			return;
+		}
+
+		// Set the current user variables, and give him a cookie. 
+		wp_set_current_user( $userid );
+		wp_set_auth_cookie( $userid );
+
+		// If we're redirecting, ensure they know we are
+		if (!empty($_POST['redirect_to'])) {
+			$_POST['redirect_to'] = add_query_arg('checkemail', 'registered', $_POST['redirect_to']);
+		}
+	}
+
+
+	/**
+	 * Ensure the redirect_to parameter is carried through to registration
+	 *
+	 * @wp-filter site_url
+	 */
+	public static function register_mangle($url, $path, $scheme) {
+		if ($scheme !== 'login' || $path !== 'wp-login.php?action=register' || empty($_REQUEST['redirect_to'])) {
+			return $url;
+		}
+
+		$url = add_query_arg('redirect_to', $_REQUEST['redirect_to'], $url);
+		return $url;
 	}
 
 	public static function get_consumer($key) {
