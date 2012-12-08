@@ -261,7 +261,7 @@ class WPOAuthProvider {
 		}
 
 		$current_user = wp_get_current_user();
-		switch (strtolower($_POST['wpoauth_button'])) {
+		switch ($_POST['wpoauth_button']) {
 			case 'authorize':
 				$token->user = $current_user->ID;
 				$token->verifier = wp_generate_password(8, false);
