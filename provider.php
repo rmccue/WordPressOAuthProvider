@@ -41,7 +41,11 @@ class WPOAuthProvider {
 		add_filter('query_vars', array(get_class(), 'query_vars'));
 		add_filter('redirect_canonical', array(get_class(), 'redirect_canonical'), 10, 2);
 		add_action('template_redirect', array(get_class(), 'template_redirect'));
+
 		add_action('login_form', array(get_class(), 'setup_register_mangle'));
+		add_action('register_form', array(get_class(), 'setup_register_mangle'));
+		add_action('lostpassword_form', array(get_class(), 'setup_register_mangle'));
+
 		add_action('update_user_metadata', array(get_class(), 'after_register_autologin'), 10, 4);
 	}
 
@@ -158,6 +162,8 @@ class WPOAuthProvider {
 
 	public static function setup_register_mangle() {
 		add_filter('site_url', array(get_class(), 'register_mangle'), 10, 3);
+		add_filter('lostpassword_url', array(get_class(), 'login_mangle'));
+		add_filter('login_url', array(get_class(), 'login_mangle'));
 	}
 
 	public static function after_register_autologin($metaid, $userid, $key, $value) {
@@ -184,6 +190,14 @@ class WPOAuthProvider {
 	 */
 	public static function register_mangle($url, $path, $scheme) {
 		if ($scheme !== 'login' || $path !== 'wp-login.php?action=register' || empty($_REQUEST['redirect_to'])) {
+			return $url;
+		}
+
+		$url = add_query_arg('redirect_to', $_REQUEST['redirect_to'], $url);
+		return $url;
+	}
+	public static function login_mangle($url) {
+		if (empty($_REQUEST['redirect_to'])) {
 			return $url;
 		}
 
