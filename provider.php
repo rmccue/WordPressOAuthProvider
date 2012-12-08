@@ -322,7 +322,7 @@ class WPOAuthProvider {
 	}
 
 	public static function authenticate($user, $username, $password) {
-		if (is_a($user, 'WP_User')) {
+		if (is_a($user, 'WP_User') || PHP_SAPI === 'cli') {
 			return $user;
 		}
 
@@ -340,6 +340,10 @@ class WPOAuthProvider {
 	}
 
 	public static function plugins_loaded() {
+		if (PHP_SAPI === 'cli') {
+			return;
+		}
+
 		try {
 			$request = OAuthRequest::from_request();
 			list($consumer, $token) = self::$server->verify_request($request);
