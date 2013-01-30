@@ -365,12 +365,11 @@ class WPOAuthProvider_DataStore {
 	 * @return object Has properties "key" and "secret"
 	 */
 	public function lookup_consumer($consumer_key) {
-		$secret = get_option('wpoa_c_' . $consumer_key, false);
-		if (!$secret) {
+		$consumer = get_option('wpoa_consumer_' . $consumer_key, false);
+		if (!$consumer) {
 			return null;
 		}
 
-		$consumer = new OAuthConsumer($consumer_key, $secret);
 		return $consumer;
 	}
 
@@ -381,7 +380,9 @@ class WPOAuthProvider_DataStore {
 		$key    = wp_generate_password(12, false);
 		$secret = self::generate_secret();
 
-		$result = update_option('wpoa_c_' . $key, $secret);
+		$consumer = new WPOAuthProvider_Consumer($key, $secret);
+
+		$result = update_option('wpoa_consumer_' . $key, $consumer);
 		if (!$result) {
 			return false;
 		}
@@ -394,11 +395,11 @@ class WPOAuthProvider_DataStore {
 	 * @return boolean
 	 */
 	public function delete_consumer($consumer_key) {
-		return delete_option('wpoa_c_' . $consumer_key, false);
+		return delete_option('wpoa_consumer_' . $consumer_key, false);
 	}
 
 	/**
-	 * @param OAuthConsumer $consumer
+	 * @param WPOAuthProvider_Consumer $consumer
 	 * @return WPOAuthProvider_Token_Request|null
 	 */
 	public function new_request_token($consumer) {
@@ -418,7 +419,7 @@ class WPOAuthProvider_DataStore {
 
 	/**
 	 * @param WPOAuth_Provider_Token_Request
-	 * @param OAuthConsumer $consumer
+	 * @param WPOAuthProvider_Consumer $consumer
 	 * @param string $verifier
 	 * @return WPOAuthProvider_Token_Access|null
 	 */
@@ -444,7 +445,7 @@ class WPOAuthProvider_DataStore {
 	}
 
 	/**
-	 * @param OAuthConsumer $consumer
+	 * @param WPOAuthProvider_Consumer $consumer
 	 * @param string $token_type Either 'request' or 'access'
 	 * @return WPOAuthProvider_Token|null
 	 */
@@ -469,7 +470,7 @@ class WPOAuthProvider_DataStore {
 	}
 
 	/**
-	 * @param OAuthConsumer $consumer
+	 * @param WPOAuthProvider_Consumer $consumer
 	 * @param WPOAuthProvider_Token $token
 	 * @param string $nonce
 	 * @param int $timestamp
@@ -617,6 +618,9 @@ class WPOAuthProvider_Token_Access extends WPOAuthProvider_Token {
 	public function delete() {
 		return delete_option('wpoa_' . $this->key);
 	}
+}
+
+class WPOAuthProvider_Consumer extends OAuthConsumer {
 }
 
 WPOAuthProvider::bootstrap();
