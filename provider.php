@@ -239,7 +239,7 @@ class WPOAuthProvider {
 			return $url;
 		}
 
-		$url = add_query_arg('redirect_to', $_REQUEST['redirect_to'], $url);
+		$url = add_query_arg('redirect_to', urlencode($_REQUEST['redirect_to']), $url);
 		return $url;
 	}
 	public static function login_mangle($url) {
@@ -247,7 +247,7 @@ class WPOAuthProvider {
 			return $url;
 		}
 
-		$url = add_query_arg('redirect_to', $_REQUEST['redirect_to'], $url);
+		$url = add_query_arg('redirect_to', urlencode($_REQUEST['redirect_to']), $url);
 		return $url;
 	}
 
