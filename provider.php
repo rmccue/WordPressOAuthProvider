@@ -77,28 +77,37 @@ class WPOAuthProvider {
 	 * @param WP_User $user Current user
 	 */
 	public static function oauth_config($user) {
-		$consumers = get_option('wpoaprovider_consumers', array());
-		if (!empty($_GET['action'])) {
-			if ($_GET['action'] === 'create') {
-				$key = WPOAuthProvider::create_consumer();
-				$consumers[$key] = $key;
-				update_option('wpoaprovider_consumers', $consumers);
+		#delete_option('wpoa_consumers');
+		if (!empty($_POST['action'])) {
+			if ($_POST['action'] === 'create') {
+				check_admin_referer('wpoa_create_consumer', 'wpoa_nonce');
+				$name = $description = '';
+
+				if (!empty($_POST['consumer_name']))
+					$name = stripslashes($_POST['consumer_name']);
+
+				if (!empty($_POST['consumer_desc']))
+					$description = stripslashes($_POST['consumer_desc']);
+
+				$key = WPOAuthProvider::create_consumer($name, $description);
 			}
-			elseif ($_GET['action'] === 'delete' && !empty($_GET['key'])) {
-				WPOAuthProvider::delete_consumer($_GET['key']);
-				unset($consumers[$_GET['key']]);
-				update_option('wpoaprovider_consumers', $consumers);
+			elseif ($_POST['action'] === 'delete' && !empty($_POST['key'])) {
+				check_admin_referer('wpoa_delete_consumer', 'wpoa_nonce');
+				WPOAuthProvider::delete_consumer($_POST['key']);
 			}
 		}
+
+		$consumers = self::$data->get_consumers();
 ?>
 	<h2><?php _e('OAuth Details' , 'wpoaprovider'); ?></h2>
-	<p><a href="index.php?page=wpoaprovider&amp;action=create">New Pair</a></p>
 <?php
 
 ?>
-	<table>
+	<table class="widefat">
 		<thead>
 			<tr>
+				<th>Name</th>
+				<th>Description</th>
 				<th>Key</th>
 				<th>Secret</th>
 				<th>Action</th>
@@ -106,19 +115,56 @@ class WPOAuthProvider {
 		</head>
 		<tbody>
 <?php
-		foreach ($consumers as $key) {
-			$consumer = WPOAuthProvider::get_consumer($key);
+		if (!empty($consumers)) {
+			foreach ($consumers as $key => $consumer) {
 ?>
 			<tr>
+				<td><?php echo $consumer->name ?></td>
+				<td><?php echo $consumer->description ?></td>
 				<td><code><?php echo $consumer->key ?></code></td>
 				<td><code><?php echo $consumer->secret ?></code></td>
-				<td><a href="index.php?page=wpoaprovider&amp;action=delete&amp;key=<?php echo esc_attr($consumer->key) ?>">Delete</a></td>
+				<td>
+					<form action="" method="POST">
+						<?php wp_nonce_field('wpoa_delete_consumer', 'wpoa_nonce') ?>
+						<input type="hidden" name="action" value="delete" />
+						<input type="hidden" name="key" value="<?php echo esc_attr($consumer->key) ?>" />
+						<input type="submit"
+							class="button button-small"
+							value="<?php esc_attr_e('Delete', 'wpoaprovider') ?>" />
+					</form>
+				</td>
+			</tr>
+<?php
+			}
+		}
+		else {
+?>
+			<tr>
+				<td colspan="5"><?php _e('No consumers found.', 'wpoaprovider') ?></td>
 			</tr>
 <?php
 		}
 ?>
 		</tbody>
 	</table>
+
+	<form action="" method="POST">
+		<h3><?php _e('Add New Consumer', 'wpoaprovider') ?></h3>
+		<table class="form-table">
+			<tr>
+				<th scope="row"><label for="wpoa_consumer_name"><?php _ex('Name', 'form label', 'wpoaprovider') ?></label></th>
+				<td><input type="text" class="regular-text" name="consumer_name" id="wpoa_consumer_name" /></td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="wpoa_consumer_desc"><?php _ex('Description', 'form label', 'wpoaprovider') ?></label></th>
+				<td><input type="text" class="regular-text" name="consumer_desc" id="wpoa_consumer_desc" /></td>
+			</tr>
+		</table>
+
+		<?php wp_nonce_field('wpoa_create_consumer', 'wpoa_nonce') ?>
+		<input type="hidden" name="action" value="create" />
+		<p class="submit"><input type="submit" class="button button-primary" value="<?php esc_attr_e('Add Consumer', 'wpoaprovider') ?>" /></p>
+	</form>
 <?php
 	}
 
@@ -209,8 +255,8 @@ class WPOAuthProvider {
 		return self::$data->lookup_consumer($key);
 	}
 
-	public static function create_consumer() {
-		return self::$data->new_consumer();
+	public static function create_consumer($name, $description) {
+		return self::$data->new_consumer($name, $description);
 	}
 
 	public static function delete_consumer($key) {
@@ -361,28 +407,52 @@ class WPOAuthProvider_DataStore {
 	const RETAIN_TIME = 3600; // retain nonces for 1 hour
 
 	/**
-	 * @param string $consumer_key
-	 * @return object Has properties "key" and "secret"
+	 * Get all consumers
+	 *
+	 * @return array Associative array of consumer key to WPOAuthProvider_Consumer object
 	 */
-	public function lookup_consumer($consumer_key) {
-		$consumer = get_option('wpoa_consumer_' . $consumer_key, false);
-		if (!$consumer) {
-			return null;
-		}
-
-		return $consumer;
+	public function get_consumers() {
+		return get_option('wpoa_consumers', array());
 	}
 
 	/**
-	 * @return string Consumer key
+	 * @param string $consumer_key
+	 * @return WPOAuthProvider_Consumer Has properties "key" and "secret"
 	 */
-	public function new_consumer() {
+	public function lookup_consumer($consumer_key) {
+		$consumers = get_option('wpoa_consumers', array());
+		if (!isset($consumers[$consumer_key])) {
+			return null;
+		}
+
+		return $consumers[$consumer_key];
+	}
+
+	/**
+	 * @return string|boolean Consumer key
+	 */
+	public function new_consumer($name, $description) {
 		$key    = wp_generate_password(12, false);
 		$secret = self::generate_secret();
 
 		$consumer = new WPOAuthProvider_Consumer($key, $secret);
+		$consumer->name = $name;
+		$consumer->description = $description;
 
-		$result = update_option('wpoa_consumer_' . $key, $consumer);
+		$consumers = get_option('wpoa_consumers', false);
+
+		// Ensure that we don't autoload the option, as this causes problems
+		// since the class isn't defined at that point
+		if ($consumers === false) {
+			$consumers = array();
+			$consumers[$key] = $consumer;
+			$result = add_option('wpoa_consumers', $consumers, null, 'no');
+		}
+		else {
+			$consumers[$key] = $consumer;
+			$result = update_option('wpoa_consumers', $consumers);
+		}
+
 		if (!$result) {
 			return false;
 		}
@@ -395,7 +465,9 @@ class WPOAuthProvider_DataStore {
 	 * @return boolean
 	 */
 	public function delete_consumer($consumer_key) {
-		return delete_option('wpoa_consumer_' . $consumer_key, false);
+		$consumers = get_option('wpoa_consumers', array());
+		unset($consumers[$consumer_key]);
+		return update_option('wpoa_consumers', $consumers);
 	}
 
 	/**
@@ -621,6 +693,8 @@ class WPOAuthProvider_Token_Access extends WPOAuthProvider_Token {
 }
 
 class WPOAuthProvider_Consumer extends OAuthConsumer {
+	public $name = '';
+	public $description = '';
 }
 
 WPOAuthProvider::bootstrap();
