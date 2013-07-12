@@ -390,6 +390,10 @@ class WPOAuthProvider {
 			return;
 		}
 
+		if (empty($_REQUEST['oauth_consumer_key']) && empty($_SERVER['HTTP_AUTHORIZATION'])) {
+			return;
+		}
+
 		try {
 			$request = OAuthRequest::from_request();
 			list($consumer, $token) = self::$server->verify_request($request);
@@ -398,6 +402,8 @@ class WPOAuthProvider {
 			$current_user = new WP_User($token->user);
 		}
 		catch (OAuthException $e) {
+			status_header(400);
+			throw $e;
 			// header('WWW-Authenticate: OAuth realm="' . site_url() . '"');
 		}
 	}
