@@ -402,8 +402,10 @@ class WPOAuthProvider {
 			$current_user = new WP_User($token->user);
 		}
 		catch (OAuthException $e) {
-			status_header(400);
-			throw $e;
+			if ( ! isset($GLOBALS['bk_auth_request']) || $GLOBALS['bk_auth_request'] !== true ) {
+				status_header(400);
+				throw $e;
+			}
 			// header('WWW-Authenticate: OAuth realm="' . site_url() . '"');
 		}
 	}
