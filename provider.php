@@ -294,27 +294,76 @@ class WPOAuthProvider {
 			die();
 		}
 
-		$token    = get_transient('wpoa_' . $request->get_parameter('oauth_token'));
-		$consumer = self::$data->lookup_consumer($token->consumer);
+		try {
+			list($token, $data) = self::authorize_handler($url, $request->get_parameter('oauth_token'), $request->get_parameter('oauth_callback'));
 
-		if (empty($_POST['wpoauth_nonce']) || empty($_POST['wpoauth_button'])) {
-			return self::authorize_page($consumer, $request->get_parameter('oauth_token'), $token, $url);
+			// Page output?
+			if ($token === false) {
+				echo $data;
+				return;
+			}
+			else {
+				if (!empty($token->callback) && $token->callback !== 'oob') {
+					$callback = add_query_arg($data, $token->callback);
+					wp_redirect($callback);
+					die();
+				}
+
+				header('Content-Type: text/plain');
+				echo http_build_query($data, null, '&');
+				die();
+			}
+		}
+		catch (WPOAuthProvider_Exception $e) {
+			switch ($e->getType()) {
+				case 'authorize.no_login':
+					// Shouldn't hit this, as we covered it before
+					break;
+
+				case 'authorize.invalid_nonce':
+					status_header(400);
+					wp_die('Invalid request.');
+					break;
+
+				case 'authorize.invalid_action':
+					// wtf?
+					status_header(500);
+					wp_die('Weird');
+					break;
+			}
+		}
+	}
+
+	public static function authorize_handler($url, $token_key, $callback = null, $nonce = null, $action = null) {
+		if (!is_user_logged_in()) {
+			throw new WPOAuthProvider_Exception('User is not logged in', 'authorize.no_login');
 		}
 
-		if (!wp_verify_nonce($_POST['wpoauth_nonce'], 'wpoauth')) {
-			status_header(400);
-			wp_die('Invalid request.');
+		$token    = get_transient('wpoa_' . $token_key);
+		if (empty($token)) {
+			throw new WPOAuthProvider_Exception('Invalid token', 'authorize.invalid_token');
+		}
+
+		$consumer = self::$data->lookup_consumer($token->consumer);
+
+		if (empty($nonce) || empty($action)) {
+			$page = self::authorize_page($consumer, $token_key, $token, $url);
+			return array(false, $page);
+		}
+
+		if (!wp_verify_nonce($nonce, 'wpoauth')) {
+			throw new WPOAuthProvider_Exception('Invalid nonce', 'authorize.invalid_nonce');
 		}
 
 		$current_user = wp_get_current_user();
-		switch ($_POST['wpoauth_button']) {
+		switch ($action) {
 			case 'authorize':
 				$token->user = $current_user->ID;
 				$token->verifier = wp_generate_password(8, false);
 				$token->authorize();
 
 				$data = array(
-					'oauth_token' => $request->get_parameter('oauth_token'),
+					'oauth_token' => $token_key,
 					'oauth_verifier' => $token->verifier
 				);
 				break;
@@ -326,34 +375,25 @@ class WPOAuthProvider {
 				);
 				break;
 			default:
-				// wtf?
-				status_header(500);
-				wp_die('Weird');
-				break;
+				throw new WPOAuthProvider_Exception('Invalid action', 'authorize.invalid_action');
 		}
 
-		if (empty($token->callback) && $request->get_parameter('oauth_callback')) {
-			$token->callback = $request->get_parameter('oauth_callback');
+		if (empty($token->callback) && $callback) {
+			$token->callback = $callback;
 			$token->save();
 		}
 
-		if (!empty($token->callback) && $token->callback !== 'oob') {
-			$callback = add_query_arg($data, $token->callback);
-			wp_redirect($callback);
-			die();
-		}
-
-
-		header('Content-Type: text/plain');
-		echo http_build_query($data, null, '&');
-		die();
+		return array($token, $data);
 	}
 
 	protected static function authorize_page($consumer, $token, $request, $current_page) {
 		$domain = parse_url($request->callback, PHP_URL_HOST);
 
 		$template = get_query_template('oauth-link');
+
+		ob_start();
 		include ($template);
+		return ob_get_clean();
 	}
 
 	public static function access_token($request) {
@@ -703,6 +743,17 @@ class WPOAuthProvider_Token_Access extends WPOAuthProvider_Token {
 class WPOAuthProvider_Consumer extends OAuthConsumer {
 	public $name = '';
 	public $description = '';
+}
+
+class WPOAuthProvider_Exception extends OAuthException {
+	public function __construct($name, $type) {
+		$this->type = $type;
+		parent::__construct($name);
+	}
+
+	public function getType() {
+		return $this->type;
+	}
 }
 
 WPOAuthProvider::bootstrap();
