@@ -438,8 +438,7 @@ class WPOAuthProvider {
 			$request = OAuthRequest::from_request();
 			list($consumer, $token) = self::$server->verify_request($request);
 
-			global $current_user;
-			$current_user = new WP_User($token->user);
+			wp_set_current_user($token->user);
 		}
 		catch (OAuthException $e) {
 			if ( ! isset($GLOBALS['bk_auth_request']) || $GLOBALS['bk_auth_request'] !== true ) {
