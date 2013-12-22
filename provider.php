@@ -604,13 +604,22 @@ class WPOAuthProvider_DataStore {
 			$real = sha1($nonce . $consumer->key . 'notoken' . $timestamp);
 		}
 
-		$existing = get_transient('wpoa_n_' . $real);
+		$nonces = get_option('wpoa_nonces', array());
 
-		if ($existing !== false) {
+		if ( isset( $nonces[ $real ] ) ) {
 			return true;
 		}
 
-		set_transient('wpoa_n_' . $real, true);
+		foreach ( $nonces as $key => $nonce_expire ) {
+			if ( $nonce_expire < (time() - self::RETAIN_TIME) ) {
+				unset($nonces[$key]);
+			}
+		}
+
+		$nonces[$real] = $timestamp;
+		delete_option('wpoa_nonces');
+		add_option('wpoa_nonces', $nonces, null, 'no');
+
 		return false;
 	}
 
