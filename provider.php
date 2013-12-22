@@ -325,10 +325,9 @@ class WPOAuthProvider {
 					wp_die('Invalid request.');
 					break;
 
-				case 'authorize.invalid_action':
-					// wtf?
+				default:
 					status_header(500);
-					wp_die('Weird');
+					wp_die(sprintf('An error occurred while authorizing: %s (%s)', $e->getMessage(), $e->getType()));
 					break;
 			}
 		}
