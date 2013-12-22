@@ -338,7 +338,7 @@ class WPOAuthProvider {
 			throw new WPOAuthProvider_Exception('User is not logged in', 'authorize.no_login');
 		}
 
-		$token    = get_transient('wpoa_' . $token_key);
+		$token = get_option( 'wpoa_' . $token_key );
 		if (empty($token)) {
 			throw new WPOAuthProvider_Exception('Invalid token', 'authorize.invalid_token');
 		}
@@ -570,10 +570,8 @@ class WPOAuthProvider_DataStore {
 	public function lookup_token($consumer, $token_type, $token) {
 		switch ($token_type) {
 			case 'access':
-				$token = get_option('wpoa_' . $token);
-				break;
 			case 'request':
-				$token = get_transient('wpoa_' . $token);
+				$token = get_option('wpoa_' . $token);
 				break;
 			default:
 				throw new OAuthException('Invalid token type');
@@ -653,14 +651,19 @@ abstract class WPOAuthProvider_Token extends OAuthToken {
 	 *
 	 * @return bool
 	 */
-	abstract public function save();
+	public function save() {
+		delete_option('wpoa_' . $this->key);
+		return add_option('wpoa_' . $this->key, $this, null, 'no');
+	}
 
 	/**
 	 * Remove token
 	 *
 	 * @return bool
 	 */
-	abstract public function delete();
+	public function delete() {
+		return delete_option('wpoa_' . $this->key);
+	}
 }
 
 /**
@@ -686,25 +689,6 @@ class WPOAuthProvider_Token_Request extends WPOAuthProvider_Token {
 	 */
 	public function authorize() {
 		$this->authorized = true;
-		$this->save();
-	}
-
-	/**
-	 * Save token
-	 *
-	 * @return bool
-	 */
-	public function save() {
-		return set_transient('wpoa_' . $this->key, $this, self::RETAIN_TIME);
-	}
-
-	/**
-	 * Remove token
-	 *
-	 * @return bool
-	 */
-	public function delete() {
-		return delete_transient('wpoa_' . $this->key);
 	}
 }
 
@@ -718,24 +702,6 @@ class WPOAuthProvider_Token_Access extends WPOAuthProvider_Token {
 	public $consumer;
 	*/
 	public $user;
-
-	/**
-	 * Save token
-	 *
-	 * @return bool
-	 */
-	public function save() {
-		return update_option('wpoa_' . $this->key, $this);
-	}
-
-	/**
-	 * Remove token
-	 *
-	 * @return bool
-	 */
-	public function delete() {
-		return delete_option('wpoa_' . $this->key);
-	}
 }
 
 class WPOAuthProvider_Consumer extends OAuthConsumer {
