@@ -388,7 +388,7 @@ class WPOAuthProvider {
 	protected static function authorize_page($consumer, $token, $request, $current_page) {
 		$domain = parse_url($request->callback, PHP_URL_HOST);
 
-		$template = get_query_template('oauth-link');
+		$template = locate_template('oauth/authorize.php');
 
 		ob_start();
 		include ($template);
