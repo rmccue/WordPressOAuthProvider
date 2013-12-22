@@ -295,7 +295,7 @@ class WPOAuthProvider {
 		}
 
 		try {
-			list($token, $data) = self::authorize_handler($url, $request->get_parameter('oauth_token'), $request->get_parameter('oauth_callback'));
+			list($token, $data) = self::authorize_handler($url, $request->get_parameter('oauth_token'), $request->get_parameter('oauth_callback'), $request->get_parameter('wpoauth_nonce'), $request->get_parameter('wpoauth_button'));
 
 			// Page output?
 			if ($token === false) {
